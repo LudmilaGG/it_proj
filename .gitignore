@@ -1,0 +1,7 @@
+venv/*
+*.db
+.idea/*
+.DS_store
+__pycache__*
+data/*
+database/*
