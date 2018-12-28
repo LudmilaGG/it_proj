@@ -281,5 +281,5 @@ if save_tables:
         print("Path doesn't exist!")
         output_path = input("Enter path to output (Or leave blank for current folder): ")
 
-    profile_data[['id', 'score']].to_csv(os.path.join(output_path, 'clients_scores.csv'))
+    score_table.to_csv(os.path.join(output_path, 'clients_scores.csv'))
     print("File was saved to %s !" % os.path.join(output_path, 'clients_scores.csv'))
