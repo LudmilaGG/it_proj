@@ -5,6 +5,8 @@ import datetime
 import matplotlib.pyplot as plt
 import os
 
+from utils import convert_data_from_categorical
+
 
 def age_category(age):
     if 18 <= age < 25:
@@ -20,6 +22,10 @@ def age_category(age):
 
 
 def income_category(income):
+    if isinstance(income, str) and not len(income):
+        income = float('nan')
+    else:
+        income = float(income)
     if income < 40000:
         return '[0-40000)'
     elif 40000 <= income < 100000:
@@ -35,6 +41,10 @@ def income_category(income):
 
 
 def age_of_car_category(age_of_car):
+    if isinstance(age_of_car, str) and not len(age_of_car):
+        age_of_car = float('nan')
+    else:
+        age_of_car = float(age_of_car)
     if age_of_car < 1:
         return '[0, 1)'
     elif 1 <= age_of_car < 3:
@@ -176,25 +186,64 @@ def score_client(client):
         else:
             return 0
 
-    age = (datetime.date.today() - client.birth_date).days // 365
     score_dict = dict()
-    score_dict['age'] = age_score(age)
+    score_dict['age'] = age_score(client.age)
     score_dict['family'] = family_score(client.family)
     score_dict['income'] = income_score(client.income)
     score_dict['house_ownership'] = house_ownership_score(client.house_ownership)
     score_dict['age_of_car'] = age_of_car_score(client.age_of_car)
-    score_dict['employed_by'] = employed_by_score(client.employed_by_id)
-    score_dict['education'] = education_score(client.education_id)
-    score_dict['marital_status'] = marital_status_score(client.marital_status_id)
-    score_dict['position'] = position_score(client.position_id)
-    score_dict['income_type'] = income_type_score(client.income_type_id)
-    score_dict['housing'] = housing_score(client.housing_id)
+    score_dict['employed_by'] = employed_by_score(client.employed_by)
+    score_dict['education'] = education_score(client.education)
+    score_dict['marital_status'] = marital_status_score(client.marital_status)
+    score_dict['position'] = position_score(client.position)
+    score_dict['income_type'] = income_type_score(client.income_type)
+    score_dict['housing'] = housing_score(client.housing)
     return score_dict
 
 
 conn = sqlite3.connect("database/origin.db")
-curr = conn.cursor()
 
-profile_data = curr.execute("SELECT * FROM profile")
+profile_data = pd.read_sql_query("SELECT * FROM profile", conn)
+profile_data.birth = profile_data.birth.apply(lambda x: datetime.datetime.strptime(x, "%m.%d.%Y").date())
+profile_data['age'] = profile_data.birth.apply(lambda x: (datetime.date.today() - x).days // 365)
 
+used_columns = ['employed_by',
+                'education',
+                'marital_status',
+                'position',
+                'income_type',
+                'housing']
 
+for column in used_columns:
+    profile_data[column] = convert_data_from_categorical(profile_data[column].values, column)
+
+profile_data['age'] = profile_data.age.apply(age_category)
+profile_data['income'] = profile_data.income.apply(income_category)
+profile_data['age_of_car'] = profile_data.age_of_car.apply(age_of_car_category)
+
+profile_data['score'] = profile_data.apply(lambda x: sum(score_client(x).values()), axis=1)
+
+print(profile_data[['id', 'score']])
+
+save_tables = input("Do you want to save table? [No]: ").lower()
+if len(save_tables) == 0:
+    save_tables = 'no'
+while save_tables not in ['n', 'no', 'y', 'yes']:
+    save_tables = input("Do you want to save table? [No]: ").lower()
+    if len(save_tables) == 0:
+        save_tables = 'no'
+
+save_tables = True if save_tables in ['y', 'yes'] else False
+
+if save_tables:
+    output_path = input("Enter path to output (Or leave blank for current folder): ")
+
+    if not len(output_path):
+        output_path = './'
+
+    while not os.path.exists(output_path):
+        print("Path doesn't exist!")
+        output_path = input("Enter path to output (Or leave blank for current folder): ")
+
+    profile_data[['id', 'score']].to_csv(os.path.join(output_path, 'clients_scores.csv'))
+    print("File was saved to %s !" % os.path.join(output_path, 'clients_scores.csv'))
