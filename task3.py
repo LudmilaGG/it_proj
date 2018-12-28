@@ -202,6 +202,7 @@ def score_client(client):
 
 
 conn = sqlite3.connect("database/origin.db")
+cur = conn.cursor()
 
 profile_data = pd.read_sql_query("SELECT * FROM profile", conn)
 profile_data.birth = profile_data.birth.apply(lambda x: datetime.datetime.strptime(x, "%m.%d.%Y").date())
@@ -224,6 +225,9 @@ profile_data['age_of_car'] = profile_data.age_of_car.apply(age_of_car_category)
 profile_data['score'] = profile_data.apply(lambda x: sum(score_client(x).values()), axis=1)
 
 print(profile_data[['id', 'score']])
+
+cur.execute("DROP TABLE IF EXISTS client_scores")
+profile_data[['id', 'score']].set_index('id', drop=True).to_sql("client_scores", conn)
 
 save_tables = input("Do you want to save table? [No]: ").lower()
 if len(save_tables) == 0:
