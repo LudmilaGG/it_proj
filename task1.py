@@ -35,6 +35,11 @@ db_connection.create_map(values_map={"House / apartment": 1,
                                      "With parents": 0}, target_table="profile", target_column="housing")
 db_connection.create_map(values_map={"Cash loans": 1,
                                      "Revolving loans": 0}, target_table="contract", target_column="type")
+db_connection.create_map(values_map={"Commercial associate": 0,
+                                     "Working": 1,
+                                     "State servant": 2,
+                                     "Pensioner": 3,
+                                     "": 4}, target_table="profile", target_column="income_type")
 
 # JOIN TABLES
 db_connection.join_tables(table1="profile", table2="contract", left_key="id", right_key="id")

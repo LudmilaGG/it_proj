@@ -51,7 +51,10 @@ class DBhandler:
                 marital_status TEXT,
                 position TEXT,
                 housing TEXT,
-                income INTEGER
+                income INTEGER,
+                age_of_car INTEGER,
+                house_ownership INTEGER,
+                income_type TEXT
             )"""
         elif type_ == "contract":
             sql_query = """CREATE TABLE IF NOT EXISTS contract
@@ -61,7 +64,8 @@ class DBhandler:
                 amount INTEGER,
                 type TEXT,
                 month_term INTEGER,
-                annuity INTEGER
+                annuity INTEGER,
+                contract_date TEXT
             )"""
         elif type_ == "payment":
             sql_query = """CREATE TABLE IF NOT EXISTS payment
@@ -136,7 +140,7 @@ def create_profile(connection, data_path):
     # open each workbook and parse the data
     profile_data = os.path.join(data_path, "profile")
     # create a insert query template
-    insert_query = """INSERT INTO profile VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
+    insert_query = """INSERT INTO profile VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
     # create a main loop for file processing
     for file_name in os.listdir(profile_data):
         file = os.path.join(profile_data, file_name)
@@ -144,7 +148,8 @@ def create_profile(connection, data_path):
         sheet = data.sheet_by_index(0)
 
         labels = ["Identity Number", "Date of Birth", "Gender", "Employed By", "Issue Date", "Education",
-                  "Children", "Family", "Marital Status", "Position", "Housing", "Income"]
+                  "Children", "Family", "Marital Status", "Position", "Housing", "Income", "Age of Car (if owned)",
+                  "House ownership", "Income Type"]
         values = [None for _ in range(len(labels))]
         row = sheet.nrows
         column = sheet.ncols
@@ -160,8 +165,18 @@ def create_profile(connection, data_path):
                                 temp = datetime(day=temp.day, month=temp.month, year=temp.year + 1900)
                                 temp = temp.strftime("%m.%d.%Y")
                                 values[k] = temp
+                        elif labels[k] == 'House ownership':
+                            if sheet.cell(i + 1, j).value == 'Y':
+                                values[k] = 1
+                            elif sheet.cell(i + 1, j).value == 'N':
+                                values[k] = 0
+                            else:
+                                values[k] = None
                         else:
-                            values[k] = sheet.cell(i + 1, j).value
+                            try:
+                                values[k] = sheet.cell(i + 1, j).value
+                            except IndexError:
+                                values[k] = None
         connection.cursor.execute(insert_query, values)
     connection.connection.commit()
 
@@ -171,13 +186,13 @@ def create_contract(connection, data_path):
     # open each workbook and parse the data
     profile_data = os.path.join(data_path, "contracts")
     # create a insert query template
-    insert_query = """INSERT INTO contract VALUES (?, ?, ?, ?, ?, ?)"""
+    insert_query = """INSERT INTO contract VALUES (?, ?, ?, ?, ?, ?, ?)"""
     for file_name in os.listdir(profile_data):
         file = os.path.join(profile_data, file_name)
         data = xlrd.open_workbook(file)
         sheet = data.sheet_by_index(0)
         labels = ['Identity Number', 'Contract Number', 'Amount', 'Type', 'Term (month)', 'Annuity']
-        values = [None for _ in range(len(labels))]
+        values = [None for _ in range(len(labels) + 1)]
         row = sheet.nrows
         column = sheet.ncols
         for i in range(row):
@@ -185,6 +200,14 @@ def create_contract(connection, data_path):
                 for k in range(len(labels)):
                     if sheet.cell(i, j).value == labels[k]:
                         values[k] = sheet.cell(i + 1, j).value
+
+        if check_date(sheet.cell(1, 5).value):
+            values[-1] = sheet.cell(1, 5).value
+        else:
+            temp = datetime.fromordinal(int(sheet.cell(1, 5).value))
+            temp = datetime(day=temp.day, month=temp.month, year=temp.year + 1900)
+            temp = temp.strftime("%m.%d.%Y")
+            values[-1] = temp
         connection.cursor.execute(insert_query, values)
     connection.connection.commit()
 
