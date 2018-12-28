@@ -113,14 +113,14 @@ class DBhandler:
         self.connection.commit()
 
     def create_map(self, values_map, target_table, target_column):
-        create_sql = """CREATE TABLE IF NOT EXISTS values_map (key TEXT, value TEXT, table_name TEXT)"""
+        create_sql = """CREATE TABLE IF NOT EXISTS values_map (key TEXT, value INTEGER, table_name TEXT, column_name TEXT)"""
         self.cursor.execute(create_sql)
         self.connection.commit()
 
-        insert_temp = """INSERT INTO values_map VALUES (?, ?, ?)"""
+        insert_temp = """INSERT INTO values_map VALUES (?, ?, ?, ?)"""
         update_temp = """UPDATE {} SET {} = '{}' WHERE {} = '{}'"""
         for pair in values_map.items():
-            self.cursor.execute(insert_temp, [pair[0], pair[1], target_table])
+            self.cursor.execute(insert_temp, [pair[0], pair[1], target_table, target_column])
             self.cursor.execute(update_temp.format(target_table, target_column, pair[1], target_column, pair[0]))
         self.connection.commit()
 
