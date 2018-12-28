@@ -222,12 +222,44 @@ profile_data['age'] = profile_data.age.apply(age_category)
 profile_data['income'] = profile_data.income.apply(income_category)
 profile_data['age_of_car'] = profile_data.age_of_car.apply(age_of_car_category)
 
-profile_data['score'] = profile_data.apply(lambda x: sum(score_client(x).values()), axis=1)
+score_table = pd.DataFrame([], columns=['id',
+                                        'age',
+                                        'family',
+                                        'income',
+                                        'house_ownership',
+                                        'age_of_car',
+                                        'employed_by',
+                                        'education',
+                                        'marital_status',
+                                        'position',
+                                        'income_type',
+                                        'housing',
+                                        ])
 
-print(profile_data[['id', 'score']])
+curr_pos = 0
+for i in range(len(profile_data)):
+    client = profile_data.iloc[i]
+    score_dict = score_client(client)
+    score_table.loc[curr_pos] = [
+        client.id,
+        score_dict['age'],
+        score_dict['family'],
+        score_dict['income'],
+        score_dict['house_ownership'],
+        score_dict['age_of_car'],
+        score_dict['employed_by'],
+        score_dict['education'],
+        score_dict['marital_status'],
+        score_dict['position'],
+        score_dict['income_type'],
+        score_dict['housing'],
+    ]
+    curr_pos = curr_pos + 1
+
+print(score_table)
 
 cur.execute("DROP TABLE IF EXISTS client_scores")
-profile_data[['id', 'score']].set_index('id', drop=True).to_sql("client_scores", conn)
+score_table.set_index('id', drop=True).to_sql("client_scores", conn)
 
 save_tables = input("Do you want to save table? [No]: ").lower()
 if len(save_tables) == 0:
