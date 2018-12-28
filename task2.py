@@ -4,6 +4,8 @@ import numpy as np
 import datetime
 import matplotlib.pyplot as plt
 
+import os
+
 conn = sqlite3.connect("database/origin.db")
 cur = conn.cursor()
 
@@ -182,7 +184,7 @@ df_gb['IV'] = (df_gb.event - df_gb.non_event) * df_gb.woe
 
 df_gb.index = df_gb.index.astype(str)
 
-plt.figure(figsize=(12, 7));
+woe_fig = plt.figure(figsize=(12, 7));
 plt.scatter(list(range(df_gb.shape[0])), df_gb.woe)
 plt.grid()
 plt.xticks(list(range(df_gb.shape[0])), df_gb.index)
@@ -192,7 +194,7 @@ plt.title("WOE plot", fontsize=16)
 plt.ion()
 plt.show()
 
-plt.figure(figsize=(12, 7));
+iv_fig = plt.figure(figsize=(12, 7));
 plt.scatter(list(range(df_gb.shape[0])), df_gb.IV)
 plt.grid()
 plt.xticks(list(range(df_gb.shape[0])), df_gb.index)
@@ -208,3 +210,52 @@ print(df_gb)
 
 plt.pause(0.001)
 input("Press [enter] to continue...")
+
+save_figs = input("Do you want to save plots? [No]: ").lower()
+if len(save_figs) == 0:
+    save_figs = 'no'
+while save_figs not in ['n', 'no', 'y', 'yes']:
+    save_figs = input("Do you want to save plots? [No]: ").lower()
+    if len(save_figs) == 0:
+        save_figs = 'no'
+
+save_figs = True if save_figs in ['y', 'yes'] else False
+
+if save_figs:
+    output_path = input("Enter path to output (Or leave blank for current folder): ")
+
+    if not len(output_path):
+        output_path = './'
+
+    while not os.path.exists(output_path):
+        print("Path doesn't exist!")
+        output_path = input("Enter path to output (Or leave blank for current folder): ")
+
+    woe_fig.savefig(os.path.join(output_path, 'woe_plot.png'))
+    iv_fig.savefig(os.path.join(output_path, 'iv_plot.png'))
+    print("Files were saved to %s !" % output_path)
+
+
+save_tables = input("Do you want to save tables? [No]: ").lower()
+if len(save_tables) == 0:
+    save_tables = 'no'
+while save_tables not in ['n', 'no', 'y', 'yes']:
+    save_tables = input("Do you want to save tables? [No]: ").lower()
+    if len(save_tables) == 0:
+        save_tables = 'no'
+
+save_tables = True if save_tables in ['y', 'yes'] else False
+
+if save_tables:
+    output_path = input("Enter path to output (Or leave blank for current folder): ")
+
+    if not len(output_path):
+        output_path = './'
+
+    while not os.path.exists(output_path):
+        print("Path doesn't exist!")
+        output_path = input("Enter path to output (Or leave blank for current folder): ")
+
+    df_gb.to_csv(os.path.join(output_path, 'woe_iv_table.csv'))
+    out_df_gb.to_csv(os.path.join(output_path, 'defaults_horizon.csv'))
+    print("Files were saved to %s !" % output_path)
