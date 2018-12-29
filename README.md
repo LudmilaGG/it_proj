@@ -43,3 +43,15 @@
 - Перейдите на вкладку "Environments"
 
 - В поле "Search Packages" вбить и установить поочередно пакеты matplotlib, numpy, pandas, python, scikit, scipy, xlrd
+
+3 . Скачивание данных
+
+Данные можно скачать с [disk.google.com] (https://drive.google.com/drive/folders/1VwgP8Vc_RCNAoZK5tWt6aUqdET6cS5vS) (на момент 29.12.18)
+
+Поместить файл payments.xls, анкеты и контракты в папку `data` проекта; анкеты и контракты должны находиться в папках `profile` и `contracts` соответственно, (должен получиться путь `<папка проекта>/data/profile/A10003.xlsx` )
+
+4 . Импортировать в python встроенную СУБД SQLite
+
+В настройках среды программирования установите библиотеки: matplotlib, numpy, pandas, python, scikit, scipy, xlrd
+
+Пример: ‘setting -> project interpreter -> плюсик -> в поле поиска xlrd -> install’
