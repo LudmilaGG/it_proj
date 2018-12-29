@@ -25,3 +25,21 @@
 - Перейдите в папку с проектом
 
 - Запустите команду `pip install -r requirements.txt`
+
+2 . Установка через Anaconda (включает в себя интерпретатор языка Python, набор наиболее часто используемых библиотек и удобную среду разработки и исполнения): для установки нужно скачать [дистрибутив] (https://www.continuum.io/downloads)
+
+- Принимаем лицензионное соглашение
+
+- Выберите «Register Anaconda as the system Python 3.5» – использовать Anaconda, как интерпретатор Python 3.5 по умолчанию
+
+Для запуска среды программирования Jupyter Notebook (входит в состав Anaconda):
+
+- Перейдите в папку Scripts (она находится внутри каталога, в котором установлена Anaconda)
+
+- В командной строке наберите: > ipython notebook
+
+Для установки пакетов: запустить Anaconda Navigator
+
+- Перейдите на вкладку "Environments"
+
+- В поле "Search Packages" вбить и установить поочередно пакеты matplotlib, numpy, pandas, python, scikit, scipy, xlrd
