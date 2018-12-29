@@ -6,13 +6,13 @@
 
 1. Установка Python и необходимых пакетов
 
-Сначала нужно установить интерпретатор языка Python, который можно взять [здесь] (https://www.python.org/downloads/)
+Сначала нужно установить интерпретатор языка Python, который можно взять [здесь](https://www.python.org/downloads/)
 
 - Выберите способ установки: Install Now
 
 - Отметьте необходимые опции установки (рекомендуем выбрать все опции)
 
-Затем среду программирования, например, JetBrains PyCharm [отсюда] (https://www.jetbrains.com/pycharm/download)
+Затем среду программирования, например, JetBrains PyCharm [отсюда](https://www.jetbrains.com/pycharm/download)
 
 - Скачайте установочный файл Community
 
@@ -26,7 +26,7 @@
 
 - Запустите команду `pip install -r requirements.txt`
 
-2 . Установка через Anaconda (включает в себя интерпретатор языка Python, набор наиболее часто используемых библиотек и удобную среду разработки и исполнения): для установки нужно скачать [дистрибутив] (https://www.continuum.io/downloads)
+2 . Установка через Anaconda (включает в себя интерпретатор языка Python, набор наиболее часто используемых библиотек и удобную среду разработки и исполнения): для установки нужно скачать [дистрибутив](https://www.continuum.io/downloads)
 
 - Принимаем лицензионное соглашение
 
@@ -46,7 +46,7 @@
 
 3 . Скачивание данных
 
-Данные можно скачать с [disk.google.com] (https://drive.google.com/drive/folders/1VwgP8Vc_RCNAoZK5tWt6aUqdET6cS5vS) (на момент 29.12.18)
+Данные можно скачать с [disk.google.com](https://drive.google.com/drive/folders/1VwgP8Vc_RCNAoZK5tWt6aUqdET6cS5vS) (на момент 29.12.18)
 
 Поместить файл payments.xls, анкеты и контракты в папку `data` проекта; анкеты и контракты должны находиться в папках `profile` и `contracts` соответственно, (должен получиться путь `<папка проекта>/data/profile/A10003.xlsx` )
 
@@ -56,7 +56,7 @@
 
 Пример: ‘setting -> project interpreter -> плюсик -> в поле поиска xlrd -> install’
 
-5 . Запуск скрипта: … Скачайте [скрипты] (https://github.com/LudmilaGG/it_proj): ‘Download ZIP’
+5 . Запуск скрипта: … Скачайте [скрипты](https://github.com/LudmilaGG/it_proj): ‘Download ZIP’
 
 Перенесите скрипты в папку проекта:
 
