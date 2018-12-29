@@ -1,16 +1,17 @@
-import sqlite3
 import pandas as pd
-import os
 import matplotlib.pyplot as plt
 import datetime
 import numpy as np
+import settings
+
+from utils import export_data, parse_date
+from general import DBhandler
 
 from sklearn.metrics import confusion_matrix, auc
 
-conn = sqlite3.connect("database/origin.db")
-cur = conn.cursor()
+db_connection = DBhandler(db_path=settings.DATABASE_PATH)
 
-clients_scores = pd.read_sql_query("SELECT * FROM client_scores", conn)
+clients_scores = pd.read_sql_query("SELECT * FROM %s" % settings.CLIENT_SCORES_TABLE, db_connection.connection)
 
 score_weights = {
     "age": 0.4919,
@@ -36,37 +37,16 @@ for ind in clients_scores.index:
 
 print(clients_scores[['id', 'total_score']])
 
-cur.execute("DROP TABLE IF EXISTS total_scores")
-clients_scores[['id', 'total_score']].set_index('id', drop=True).to_sql("total_scores", conn)
+db_connection.execute_sql("DROP TABLE IF EXISTS %s" % settings.TOTAL_SCORES_TABLE)
+clients_scores[['id', 'total_score']].set_index('id', drop=True).to_sql(settings.TOTAL_SCORES_TABLE, db_connection.connection)
 
-save_tables = input("Do you want to save table? [No]: ").lower()
-if len(save_tables) == 0:
-    save_tables = 'no'
-while save_tables not in ['n', 'no', 'y', 'yes']:
-    save_tables = input("Do you want to save table? [No]: ").lower()
-    if len(save_tables) == 0:
-        save_tables = 'no'
-
-save_tables = True if save_tables in ['y', 'yes'] else False
-
-if save_tables:
-    output_path = input("Enter path to output (Or leave blank for current folder): ")
-
-    if not len(output_path):
-        output_path = './'
-
-    while not os.path.exists(output_path):
-        print("Path doesn't exist!")
-        output_path = input("Enter path to output (Or leave blank for current folder): ")
-
-    clients_scores[['id', 'total_score']].to_csv(os.path.join(output_path, 'total_scores.csv'))
-    print("File was saved to %s !" % os.path.join(output_path, 'total_scores.csv'))
+export_data("client scores table", "total_scores.csv", clients_scores[['id', 'total_score']].to_csv)
 
 # risk horizon
 
-payments_df = pd.read_sql_query("SELECT * FROM payment", conn)
+payments_df = pd.read_sql_query("SELECT * FROM %s" % settings.PAYMENT_TABLE, db_connection.connection)
 
-payments_df.payment_date = payments_df.payment_date.apply(lambda x: datetime.datetime.strptime(x, "%m.%d.%Y").date())
+payments_df.payment_date = payments_df.payment_date.apply(parse_date)
 
 payments_df['overdue_days'] = -1
 
@@ -91,8 +71,8 @@ for contract in payments_df.contract_id.unique():
 
 default_dates = payments_df[payments_df.overdue_days == 90].groupby(['contract_id'], as_index=False).agg({"payment_date": "max"})
 
-contracts_df = pd.read_sql_query("SELECT * FROM contract", conn, index_col='contract_id')
-contracts_df.contract_date = contracts_df.contract_date.apply(lambda x: datetime.datetime.strptime(x, "%m.%d.%Y").date())
+contracts_df = pd.read_sql_query("SELECT * FROM %s" % settings.CONTRACT_TABLE, db_connection.connection, index_col='contract_id')
+contracts_df.contract_date = contracts_df.contract_date.apply(parse_date)
 
 payments_df['contract_date'] = np.nan
 payments_df['id_number'] = 0
@@ -165,25 +145,4 @@ plt.show()
 plt.pause(0.01)
 input("Press [enter] to continue...")
 
-save_figs = input("Do you want to save plot? [No]: ").lower()
-if len(save_figs) == 0:
-    save_figs = 'no'
-while save_figs not in ['n', 'no', 'y', 'yes']:
-    save_figs = input("Do you want to save plot? [No]: ").lower()
-    if len(save_figs) == 0:
-        save_figs = 'no'
-
-save_figs = True if save_figs in ['y', 'yes'] else False
-
-if save_figs:
-    output_path = input("Enter path to output (Or leave blank for current folder): ")
-
-    if not len(output_path):
-        output_path = './'
-
-    while not os.path.exists(output_path):
-        print("Path doesn't exist!")
-        output_path = input("Enter path to output (Or leave blank for current folder): ")
-
-    roc_curve.savefig(os.path.join(output_path, 'roc_plot.png'))
-    print("Files were saved to %s !" % os.path.join(output_path, "roc_plot.png"))
+export_data("roc plot", "roc_plot.png", roc_curve.savefig)

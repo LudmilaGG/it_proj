@@ -1,17 +1,16 @@
-import sqlite3
 import pandas as pd
 import numpy as np
 import datetime
 import matplotlib.pyplot as plt
+from utils import export_data, parse_date
+import settings
+from general import DBhandler
 
-import os
+db_connection = DBhandler(db_path=settings.DATABASE_PATH)
 
-conn = sqlite3.connect("database/origin.db")
-cur = conn.cursor()
+payments_df = pd.read_sql_query("SELECT * FROM %s" % settings.PAYMENT_TABLE, db_connection.connection)
 
-payments_df = pd.read_sql_query("SELECT * FROM payment", conn)
-
-payments_df.payment_date = payments_df.payment_date.apply(lambda x: datetime.datetime.strptime(x, "%m.%d.%Y").date())
+payments_df.payment_date = payments_df.payment_date.apply(parse_date)
 
 s_dates = payments_df.groupby(['contract_id'], as_index=False).agg({'payment_date': 'min'})
 
@@ -61,8 +60,8 @@ default_dates = payments_df[payments_df.overdue_days == 90].groupby(['contract_i
 print(default_dates.rename({"contract_id": "Contract Number", "payment_date": "Default Date"}, axis=1))
 
 
-contracts_df = pd.read_sql_query("SELECT * FROM contract", conn, index_col='contract_id')
-contracts_df.contract_date = contracts_df.contract_date.apply(lambda x: datetime.datetime.strptime(x, "%m.%d.%Y").date())
+contracts_df = pd.read_sql_query("SELECT * FROM %s" % settings.CONTRACT_TABLE, db_connection.connection, index_col='contract_id')
+contracts_df.contract_date = contracts_df.contract_date.apply(parse_date)
 
 # Определяем дату договора и заёмщика
 payments_df['contract_date'] = np.nan
@@ -109,12 +108,12 @@ applications_df = pd.read_sql_query("""
 SELECT
     *
 FROM
-    profile
-""", conn, index_col='id')
+    %s
+""" % settings.PROFILE_TABLE, db_connection.connection, index_col='id')
 
 # Убираем ненужные колонки
 applications_df.drop(["issue_date"], axis=1, inplace=True)
-applications_df.birth = applications_df.birth.apply(lambda x: datetime.datetime.strptime(x, "%m.%d.%Y").date())
+applications_df.birth = applications_df.birth.apply(parse_date)
 
 # Убираем клиента, по которому мало данных
 
@@ -211,51 +210,8 @@ print(df_gb)
 plt.pause(0.001)
 input("Press [enter] to continue...")
 
-save_figs = input("Do you want to save plots? [No]: ").lower()
-if len(save_figs) == 0:
-    save_figs = 'no'
-while save_figs not in ['n', 'no', 'y', 'yes']:
-    save_figs = input("Do you want to save plots? [No]: ").lower()
-    if len(save_figs) == 0:
-        save_figs = 'no'
+export_data("woe plot", "woe_plot.png", woe_fig.savefig)
+export_data("iv plot", "iv_plot.png", iv_fig.savefig)
 
-save_figs = True if save_figs in ['y', 'yes'] else False
-
-if save_figs:
-    output_path = input("Enter path to output (Or leave blank for current folder): ")
-
-    if not len(output_path):
-        output_path = './'
-
-    while not os.path.exists(output_path):
-        print("Path doesn't exist!")
-        output_path = input("Enter path to output (Or leave blank for current folder): ")
-
-    woe_fig.savefig(os.path.join(output_path, 'woe_plot.png'))
-    iv_fig.savefig(os.path.join(output_path, 'iv_plot.png'))
-    print("Files were saved to %s !" % output_path)
-
-
-save_tables = input("Do you want to save tables? [No]: ").lower()
-if len(save_tables) == 0:
-    save_tables = 'no'
-while save_tables not in ['n', 'no', 'y', 'yes']:
-    save_tables = input("Do you want to save tables? [No]: ").lower()
-    if len(save_tables) == 0:
-        save_tables = 'no'
-
-save_tables = True if save_tables in ['y', 'yes'] else False
-
-if save_tables:
-    output_path = input("Enter path to output (Or leave blank for current folder): ")
-
-    if not len(output_path):
-        output_path = './'
-
-    while not os.path.exists(output_path):
-        print("Path doesn't exist!")
-        output_path = input("Enter path to output (Or leave blank for current folder): ")
-
-    df_gb.to_csv(os.path.join(output_path, 'woe_iv_table.csv'))
-    out_df_gb.to_csv(os.path.join(output_path, 'defaults_horizon.csv'))
-    print("Files were saved to %s !" % output_path)
+export_data("woe iv table", "woe_iv_table.csv", df_gb.to_csv)
+export_data("defaults on horizon table", "defaults_horizon.csv", out_df_gb.to_csv)

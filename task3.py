@@ -1,11 +1,9 @@
-import sqlite3
 import pandas as pd
-import numpy as np
 import datetime
-import matplotlib.pyplot as plt
-import os
+import settings
+from general import DBhandler
 
-from utils import convert_data_from_categorical
+from utils import convert_data_from_categorical, export_data, parse_date
 
 
 def age_category(age):
@@ -201,11 +199,10 @@ def score_client(client):
     return score_dict
 
 
-conn = sqlite3.connect("database/origin.db")
-cur = conn.cursor()
+db_connection = DBhandler(db_path=settings.DATABASE_PATH)
 
-profile_data = pd.read_sql_query("SELECT * FROM profile", conn)
-profile_data.birth = profile_data.birth.apply(lambda x: datetime.datetime.strptime(x, "%m.%d.%Y").date())
+profile_data = pd.read_sql_query("SELECT * FROM %s" % settings.PROFILE_TABLE, db_connection.connection)
+profile_data.birth = profile_data.birth.apply(parse_date)
 profile_data['age'] = profile_data.birth.apply(lambda x: (datetime.date.today() - x).days // 365)
 
 used_columns = ['employed_by',
@@ -258,28 +255,7 @@ for i in range(len(profile_data)):
 
 print(score_table)
 
-cur.execute("DROP TABLE IF EXISTS client_scores")
-score_table.set_index('id', drop=True).to_sql("client_scores", conn)
+db_connection.execute_sql("DROP TABLE IF EXISTS %s" % settings.CLIENT_SCORES_TABLE)
+score_table.set_index('id', drop=True).to_sql(settings.CLIENT_SCORES_TABLE, db_connection.connection)
 
-save_tables = input("Do you want to save table? [No]: ").lower()
-if len(save_tables) == 0:
-    save_tables = 'no'
-while save_tables not in ['n', 'no', 'y', 'yes']:
-    save_tables = input("Do you want to save table? [No]: ").lower()
-    if len(save_tables) == 0:
-        save_tables = 'no'
-
-save_tables = True if save_tables in ['y', 'yes'] else False
-
-if save_tables:
-    output_path = input("Enter path to output (Or leave blank for current folder): ")
-
-    if not len(output_path):
-        output_path = './'
-
-    while not os.path.exists(output_path):
-        print("Path doesn't exist!")
-        output_path = input("Enter path to output (Or leave blank for current folder): ")
-
-    score_table.to_csv(os.path.join(output_path, 'clients_scores.csv'))
-    print("File was saved to %s !" % os.path.join(output_path, 'clients_scores.csv'))
+export_data("scores table", "clients_scores.csv", score_table.to_csv)

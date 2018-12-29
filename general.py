@@ -1,13 +1,7 @@
 import xlrd
 from datetime import datetime, timedelta
 import os
-import pandas as pd
-from tabulate import tabulate
-import math
-import numpy as np
-from sklearn.metrics import roc_curve
-import matplotlib.pyplot as plt
-from dateutil.relativedelta import relativedelta
+import settings
 
 
 class DBhandler:
@@ -37,7 +31,7 @@ class DBhandler:
     def create_table(self, type_=None):
         if not type_:
             raise Exception("type_ is required")
-        if type_ == "profile":
+        if type_ == settings.PROFILE_TABLE:
             sql_query = """CREATE TABLE IF NOT EXISTS profile
             (
                 id INTEGER NOT NULL,
@@ -56,7 +50,7 @@ class DBhandler:
                 house_ownership INTEGER,
                 income_type TEXT
             )"""
-        elif type_ == "contract":
+        elif type_ == settings.CONTRACT_TABLE:
             sql_query = """CREATE TABLE IF NOT EXISTS contract
             (
                 id INTEGER NOT NULL,
@@ -67,7 +61,7 @@ class DBhandler:
                 annuity INTEGER,
                 contract_date TEXT
             )"""
-        elif type_ == "payment":
+        elif type_ == settings.PAYMENT_TABLE:
             sql_query = """CREATE TABLE IF NOT EXISTS payment
             (
                 contract_id INTEGER NOT NULL,
@@ -76,28 +70,6 @@ class DBhandler:
                 amount_paid REAL
             )
             """
-        elif type_ == "payment_delay":
-            sql_query = """CREATE TABLE IF NOT EXISTS payment_delay
-            (
-                contract_id INTEGER NOT NULL,
-                payment_date TEXT,
-                payment_delay INTEGER,
-                status TEXT
-            )"""
-        elif type_ == "payment_delay_max":
-            sql_query = """CREATE TABLE IF NOT EXISTS payment_delay_max
-            (
-              contract_id INTEGER NOT NULL,
-              payment_delay INTEGER
-            )"""
-        elif type_ == "temp":
-            sql_query = """CREATE TABLE IF NOT EXISTS temp
-            (
-                payment_day1 TEXT,
-                payment_delay INTEGER,
-                status TEXT,
-                contract_id INTEGER NOT NULL
-            )"""
         else:
             sql_query = ""
 
@@ -136,9 +108,9 @@ def check_date(date_str):
 
 
 def create_profile(connection, data_path):
-    connection.create_table(type_="profile")
+    connection.create_table(type_=settings.PROFILE_TABLE)
     # open each workbook and parse the data
-    profile_data = os.path.join(data_path, "profile")
+    profile_data = os.path.join(data_path, settings.PROFILE_TABLE)
     # create a insert query template
     insert_query = """INSERT INTO profile VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
     # create a main loop for file processing
@@ -182,7 +154,7 @@ def create_profile(connection, data_path):
 
 
 def create_contract(connection, data_path):
-    connection.create_table(type_="contract")
+    connection.create_table(type_=settings.CONTRACT_TABLE)
     # open each workbook and parse the data
     profile_data = os.path.join(data_path, "contracts")
     # create a insert query template
@@ -213,7 +185,7 @@ def create_contract(connection, data_path):
 
 
 def create_payments(connection, data_path):
-    connection.create_table(type_="payment")
+    connection.create_table(type_=settings.PAYMENT_TABLE)
     insert_query = """INSERT INTO payment VALUES (?, ?, ?, ?)"""
     excel = xlrd.open_workbook(data_path)
     sheet = excel.sheet_by_index(0)
